@@ -3,3 +3,11 @@ policycap network_peer_controls;
 
 # Enable open permission check.
 policycap open_perms;
+
+# Enable NoNewPrivileges support.  Requires libsepol 2.7+
+# and kernel 4.14 (estimated).
+#
+# Checks enabled;
+# process2: nnp_transition, nosuid_transition
+#
+policycap nnp_nosuid_transition;

@@ -20,6 +20,7 @@ common file
 	relabelfrom
 	relabelto
 	append
+	map
 	unlink
 	link
 	rename
@@ -47,6 +48,7 @@ common socket
 	relabelfrom
 	relabelto
 	append
+	map
 # socket-specific
 	bind
 	connect
@@ -77,6 +79,60 @@ common ipc
 	associate
 	unix_read
 	unix_write
+}
+
+#
+# Define a common for capability access vectors.
+#
+common cap
+{
+	# The capabilities are defined in include/linux/capability.h
+	# Capabilities >= 32 are defined in the cap2 common.
+	# Care should be taken to ensure that these are consistent with
+	# those definitions. (Order matters)
+
+	chown
+	dac_override
+	dac_read_search
+	fowner
+	fsetid
+	kill
+	setgid
+	setuid
+	setpcap
+	linux_immutable
+	net_bind_service
+	net_broadcast
+	net_admin
+	net_raw
+	ipc_lock
+	ipc_owner
+	sys_module
+	sys_rawio
+	sys_chroot
+	sys_ptrace
+	sys_pacct
+	sys_admin
+	sys_boot
+	sys_nice
+	sys_resource
+	sys_time
+	sys_tty_config
+	mknod
+	lease
+	audit_write
+	audit_control
+	setfcap
+}
+
+common cap2
+{
+	mac_override	# unused by SELinux
+	mac_admin	# unused by SELinux
+	syslog
+	wake_alarm
+	block_suspend
+	audit_read
 }
 
 #
@@ -252,6 +308,15 @@ inherits socket
 class unix_dgram_socket
 inherits socket
 
+class bpf
+{
+	map_create
+	map_read
+	map_write
+	prog_load
+	prog_run
+}
+
 #
 # Define the access vector interpretation for process-related objects
 #
@@ -288,8 +353,14 @@ class process
 	execheap
 	setkeycreate
 	setsockcreate
+	getrlimit
 }
 
+class process2
+{
+    nnp_transition
+    nosuid_transition
+}
 
 #
 # Define the access vector interpretation for ipc-related objects
@@ -338,6 +409,7 @@ class security
 	setsecparam
 	setcheckreqprot
 	read_policy
+	validate_trans
 }
 
 
@@ -352,62 +424,18 @@ class system
 	syslog_mod
 	syslog_console
 	module_request
+	module_load
 }
 
 #
-# Define the access vector interpretation for controling capabilies
+# Define the access vector interpretation for controlling capabilities
 #
 
 class capability
-{
-	# The capabilities are defined in include/linux/capability.h
-	# Capabilities >= 32 are defined in the capability2 class.
-	# Care should be taken to ensure that these are consistent with
-	# those definitions. (Order matters)
-
-	chown
-	dac_override
-	dac_read_search
-	fowner
-	fsetid
-	kill
-	setgid
-	setuid
-	setpcap
-	linux_immutable
-	net_bind_service
-	net_broadcast
-	net_admin
-	net_raw
-	ipc_lock
-	ipc_owner
-	sys_module
-	sys_rawio
-	sys_chroot
-	sys_ptrace
-	sys_pacct
-	sys_admin
-	sys_boot
-	sys_nice
-	sys_resource
-	sys_time
-	sys_tty_config
-	mknod
-	lease
-	audit_write
-	audit_control
-	setfcap
-}
+inherits cap
 
 class capability2
-{
-	mac_override	# unused by SELinux
-	mac_admin	# unused by SELinux
-	syslog
-	wake_alarm
-	block_suspend
-	audit_read
-}
+inherits cap2
 
 #
 # Extended Netlink classes
@@ -417,6 +445,7 @@ inherits socket
 {
 	nlmsg_read
 	nlmsg_write
+	nlmsg_readpriv
 }
 
 class netlink_firewall_socket
@@ -544,12 +573,176 @@ class binder
 	transfer
 }
 
+class netlink_iscsi_socket
+inherits socket
+
+class netlink_fib_lookup_socket
+inherits socket
+
+class netlink_connector_socket
+inherits socket
+
+class netlink_netfilter_socket
+inherits socket
+
+class netlink_generic_socket
+inherits socket
+
+class netlink_scsitransport_socket
+inherits socket
+
+class netlink_rdma_socket
+inherits socket
+
+class netlink_crypto_socket
+inherits socket
+
+class infiniband_pkey
+{
+    access
+}
+
+class infiniband_endport
+{
+    manage_subnet
+}
+
+#
+# Define the access vector interpretation for controlling capabilities
+# in user namespaces
+#
+
+class cap_userns
+inherits cap
+
+class cap2_userns
+inherits cap2
+
+
+#
+# Define the access vector interpretation for the new socket classes
+# enabled by the extended_socket_class policy capability.
+#
+
+#
+# The next two classes were previously mapped to rawip_socket and therefore
+# have the same definition as rawip_socket (until further permissions
+# are defined).
+#
+class sctp_socket
+inherits socket
+{
+	node_bind
+	name_connect
+	association
+}
+
+class icmp_socket
+inherits socket
+{
+	node_bind
+}
+
+#
+# The remaining network socket classes were previously
+# mapped to the socket class and therefore have the
+# same definition as socket.
+#
+
+class ax25_socket
+inherits socket
+
+class ipx_socket
+inherits socket
+
+class netrom_socket
+inherits socket
+
+class atmpvc_socket
+inherits socket
+
+class x25_socket
+inherits socket
+
+class rose_socket
+inherits socket
+
+class decnet_socket
+inherits socket
+
+class atmsvc_socket
+inherits socket
+
+class rds_socket
+inherits socket
+
+class irda_socket
+inherits socket
+
+class pppox_socket
+inherits socket
+
+class llc_socket
+inherits socket
+
+class can_socket
+inherits socket
+
+class tipc_socket
+inherits socket
+
+class bluetooth_socket
+inherits socket
+
+class iucv_socket
+inherits socket
+
+class rxrpc_socket
+inherits socket
+
+class isdn_socket
+inherits socket
+
+class phonet_socket
+inherits socket
+
+class ieee802154_socket
+inherits socket
+
+class caif_socket
+inherits socket
+
+class alg_socket
+inherits socket
+
+class nfc_socket
+inherits socket
+
+class vsock_socket
+inherits socket
+
+class kcm_socket
+inherits socket
+
+class qipcrtr_socket
+inherits socket
+
+class smc_socket
+inherits socket
+
 class property_service
 {
 	set
 }
 
 class service_manager
+{
+	add
+	find
+	list
+}
+
+class hwservice_manager
 {
 	add
 	find
@@ -576,6 +769,7 @@ class keystore_key
 	clear_uid
 	add_auth
 	user_changed
+	gen_unique_id
 }
 
 class debuggerd
@@ -594,3 +788,6 @@ class drmservice {
 	finalizeDecryptUnit
 	pread
 }
+
+class xdp_socket
+inherits socket
